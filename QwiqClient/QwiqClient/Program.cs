@@ -1,11 +1,4 @@
-﻿using QwiqClient.Services;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace QwiqClient
@@ -14,16 +7,18 @@ namespace QwiqClient
     {
         static void Main(string[] args)
         {
-            var client = new HttpClient();
-            var processIdResponse = client.GetAsync("http://localhost/pid/").Result;
-            var processId = int.Parse(processIdResponse.Content.ReadAsStringAsync().Result);
-            var process = Process.GetProcessById(processId);
-            var memoryReader = new MemoryReader(process);
+            Task.Run(TestGet);
+            Console.ReadLine();
+        }
 
-            var addressResponse = client.GetAsync("http://localhost/get/my-item").Result;
-            var addressStr = addressResponse.Content.ReadAsStringAsync().Result;
-            var address = int.Parse(addressStr);
-            var obj = memoryReader.ReadMemory<MyStruct>(address);
+        static async Task TestGet()
+        {
+            using (var client = new Client())
+            {
+                await client.Initialize();
+                var obj = await client.GetAsync<MyStruct>("my-item");
+                Console.WriteLine(obj.x);
+            }
         }
 
         public struct MyStruct
