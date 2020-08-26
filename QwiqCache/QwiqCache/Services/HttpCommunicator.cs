@@ -16,17 +16,14 @@ namespace QwiqCache.Services
 
         public Action<HttpListenerContext, string> OnGetItemRequest { get; set; }
 
-        public Action<HttpListenerContext, AllocateMemoryBody> OnAllocateRequest { get; set; }
-
-        public Action<HttpListenerContext, BindItemBody> OnBindItemRequest { get; set; }
+        public Action<HttpListenerContext, AddItemBody> OnAddItemRequest { get; set; }
 
         public HttpCommunicator(int port)
         {
             _prefixes = new string[]
             {
                 $"http://localhost:{port}/pid/",
-                $"http://localhost:{port}/allocate/",
-                $"http://localhost:{port}/bind/",
+                $"http://localhost:{port}/add/",
                 $"http://localhost:{port}/get/",
             };
         }
@@ -72,11 +69,8 @@ namespace QwiqCache.Services
                 {
                     switch (urlParts[1])
                     {
-                        case "allocate":
-                            OnAllocateRequest(context, GetBodyObject<AllocateMemoryBody>(request.InputStream));
-                            break;
-                        case "bind":
-                            OnBindItemRequest(context, GetBodyObject<BindItemBody>(request.InputStream));
+                        case "add":
+                            OnAddItemRequest(context, GetBodyObject<AddItemBody>(request.InputStream));
                             break;
                     }
                 }

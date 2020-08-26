@@ -18,8 +18,7 @@ namespace QwiqCache
             Communicator = new HttpCommunicator(port);
             Communicator.OnGetItemRequest = OnGetItemRequest;
             Communicator.OnProcessIdRequested = OnProcessIdRequested;
-            Communicator.OnBindItemRequest = OnBindItemRequest;
-            Communicator.OnAllocateRequest = OnAllocateRequest;
+            Communicator.OnAddItemRequest = OnAddItemRequest;
             Communicator.Start();
 
             Console.WriteLine($"Process started: {Process.GetCurrentProcess().Id} on port {port}");
@@ -63,18 +62,12 @@ namespace QwiqCache
             }
         }
 
-        private static void OnAllocateRequest(HttpListenerContext context, AllocateMemoryBody body)
+        private static void OnAddItemRequest(HttpListenerContext context, AddItemBody body)
         {
             Console.WriteLine("Allocating memory: " + body.Length + " bytes");
             var pointer = CHandler.Allocate(body.Length);
+            CHandler.AddItem(body.Key, pointer, body.Length);
             Communicator.Send(context, pointer.ToString());
-        }
-
-        private static void OnBindItemRequest(HttpListenerContext context, BindItemBody body)
-        {
-            Console.WriteLine("Adding new item: " + body.Key);
-            CHandler.AddItem(body.Key, body.Address, body.Length);
-            Communicator.Send(context, "True");
         }
 
         private static void OnGetItemRequest(HttpListenerContext context, string key)

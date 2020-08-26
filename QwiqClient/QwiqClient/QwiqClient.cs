@@ -88,18 +88,17 @@ namespace Qwiq
             {
                 var bytes = ObjectToByteArray(item);
 
-                var address = await AllocateMemory(bytes.Length);
-
-                _memoryIO.WriteMemory(address, bytes);
-
                 var body = CreateJsonContent(new AddItemRequestModel
                 {
-                    Address = address,
                     Key = key,
                     Length = bytes.Length
                 });
 
-                var response = await _httpClient.PostAsync($"{_baseUrl}/bind", body);
+                var allocateResp = await _httpClient.PostAsync($"{_baseUrl}/add", body);
+                var addressStr = await allocateResp.Content.ReadAsStringAsync();
+                var address = int.Parse(addressStr);
+
+                _memoryIO.WriteMemory(address, bytes);
 
                 return true;
             }
@@ -107,19 +106,6 @@ namespace Qwiq
             {
                 return false;
             }
-        }
-
-        private async Task<int> AllocateMemory(object length)
-        {
-            var allocBody = CreateJsonContent(new
-            {
-                Length = length
-            });
-
-            var allocateResp = await _httpClient.PostAsync($"{_baseUrl}/allocate/", allocBody);
-            var addressStr = await allocateResp.Content.ReadAsStringAsync();
-            var address = int.Parse(addressStr);
-            return address;
         }
 
         private StringContent CreateJsonContent(object obj)
