@@ -11,7 +11,7 @@ HTTP is used to send and receive pointers between the Client and Qwiq.
 
 Since the client is reading from another process, it needs to be runned with Administrator rights.
 
-### Creation of data
+### Store data
 
 ```c#
 var client = new Qwiq.QwiqClient(port: 1988);
