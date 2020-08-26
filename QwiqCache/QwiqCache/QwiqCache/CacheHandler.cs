@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using QwiqCache.Services;
+﻿using QwiqCache.Models;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -8,15 +7,11 @@ namespace QwiqCache
 {
     public class CacheHandler
     {
-        private StructGenerator _structGenerator;
-
-        private Dictionary<string, Type> _structDictionary = new Dictionary<string, Type>();
 
         private Dictionary<string, CacheObject> _cacheDictionary = new Dictionary<string, CacheObject>();
 
         public CacheHandler()
         {
-            _structGenerator = new StructGenerator();
         }
 
         public int Allocate(int length)
@@ -26,33 +21,24 @@ namespace QwiqCache
             return (int)handle.AddrOfPinnedObject();
         }
 
-        public IntPtr GetItemAddress(string key)
+        public CacheObject GetItem(string key)
         {
             if (!_cacheDictionary.ContainsKey(key))
             {
-                return IntPtr.Zero;
+                return null;
             }
 
             var obj = _cacheDictionary[key];
 
-            return obj.Address;
+            return obj;
         }
 
-        public bool AddItem(string key, string structName, int objAddress)
+        public bool AddItem(string key, int objAddress, int byteLength)
         {
-            if (!_structDictionary.ContainsKey(structName))
-            {
-                return false;
-            }
-
-            var type = _structDictionary[structName];
-
-            var result = Marshal.PtrToStructure(new IntPtr(objAddress), type);
-
             var cacheObj = new CacheObject
             {
-                Object = result,
-                Address = new IntPtr(objAddress)
+                Address = objAddress,
+                Length = byteLength
             };
 
             if (_cacheDictionary.ContainsKey(key))
@@ -65,30 +51,6 @@ namespace QwiqCache
             }
 
             return true;
-        }
-
-        public bool AddStruct(string structStr)
-        {
-            var result = _structGenerator.BuildStruct(structStr);
-            if (result == null)
-            {
-                return false;
-            }
-
-            if (_structDictionary.ContainsKey(result.Name))
-            {
-                _structDictionary[result.Name] = result.Type;
-                return true;
-            }
-
-            _structDictionary.Add(result.Name, result.Type);
-            return true;
-        }
-
-        internal class CacheObject
-        {
-            public object Object { get; set; }
-            public IntPtr Address { get; set; }
         }
     }
 }

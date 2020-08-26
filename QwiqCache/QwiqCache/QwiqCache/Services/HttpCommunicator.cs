@@ -20,15 +20,12 @@ namespace QwiqCache.Services
 
         public Action<HttpListenerContext, BindItemBody> OnBindItemRequest { get; set; }
 
-        public Action<HttpListenerContext, AddStructBody> OnAddStructRequest { get; set; }
-
         public HttpCommunicator()
         {
             _prefixes = new string[]
             {
                 "http://localhost/pid/",
                 "http://localhost/allocate/",
-                "http://localhost/add-struct/",
                 "http://localhost/bind/",
                 "http://localhost/get/",
             };
@@ -77,9 +74,6 @@ namespace QwiqCache.Services
                 {
                     switch (urlParts[1])
                     {
-                        case "add-struct":
-                            OnAddStructRequest(context, GetBodyObject<AddStructBody>(request.InputStream));
-                            break;
                         case "allocate":
                             OnAllocateRequest(context, GetBodyObject<AllocateMemoryBody>(request.InputStream));
                             break;

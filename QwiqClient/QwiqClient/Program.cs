@@ -1,5 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
 namespace QwiqClient
@@ -9,7 +15,6 @@ namespace QwiqClient
         static void Main(string[] args)
         {
             Task.Run(TestGet);
-
             Console.ReadLine();
         }
 
@@ -19,28 +24,29 @@ namespace QwiqClient
             {
                 await client.Initialize();
 
-                await client.AddStruct<MyStruct>();
-
-                var obj = new MyStruct()
+                var obj = new MyClass()
                 {
-                    x = 13,
-                    y = 54,
-                    z = 5
+                    X = 1,
+                    Y = 5,
+                    Name = "Henkepenke"
                 };
 
                 await client.AddItemAsync("my-item2", obj);
 
-                var result = await client.GetAsync<MyStruct>("my-item2");
+                var result = await client.GetAsync<MyClass>("my-item2");
 
                 Console.WriteLine(JsonConvert.SerializeObject(result));
             }
         }
 
-        public struct MyStruct
+        [Serializable]
+        public class MyClass
         {
-            public int x;
-            public int y;
-            public int z;
+            public string Name;
+
+            public int X;
+
+            public int Y;
         }
     }
 }

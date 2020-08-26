@@ -1,4 +1,5 @@
-﻿using QwiqCache.Models;
+﻿using Newtonsoft.Json;
+using QwiqCache.Models;
 using QwiqCache.Services;
 using System;
 using System.Diagnostics;
@@ -16,7 +17,6 @@ namespace QwiqCache
         {
             Communicator.OnGetItemRequest = OnGetItemRequest;
             Communicator.OnProcessIdRequested = OnProcessIdRequested;
-            Communicator.OnAddStructRequest = OnAddStructRequest;
             Communicator.OnBindItemRequest = OnBindItemRequest;
             Communicator.OnAllocateRequest = OnAllocateRequest;
             Communicator.Start();
@@ -35,21 +35,14 @@ namespace QwiqCache
         private static void OnBindItemRequest(HttpListenerContext context, BindItemBody body)
         {
             Console.WriteLine("Adding new item: " + body.Key);
-            CHandler.AddItem(body.Key, body.StructName, body.Address);
-            Communicator.Send(context, "True");
-        }
-
-        private static void OnAddStructRequest(HttpListenerContext context, AddStructBody body)
-        {
-            Console.WriteLine("Adding new struct: " + body.StructCode);
-            CHandler.AddStruct(body.StructCode);
+            CHandler.AddItem(body.Key, body.Address, body.Length);
             Communicator.Send(context, "True");
         }
 
         private static void OnGetItemRequest(HttpListenerContext context, string key)
         {
-            var ptr = CHandler.GetItemAddress(key);
-            Communicator.Send(context, ptr.ToString());
+            var ptr = CHandler.GetItem(key);
+            Communicator.Send(context, JsonConvert.SerializeObject(ptr));
         }
 
         private static void OnProcessIdRequested(HttpListenerContext context)

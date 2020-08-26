@@ -1,9 +1,12 @@
 ﻿using Newtonsoft.Json;
+using QwiqClient.Models;
 using QwiqClient.Services;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
 namespace QwiqClient
@@ -40,34 +43,32 @@ namespace QwiqClient
         }
 
         public async Task<T> GetAsync<T>(string key)
-            where T : struct
         {
             var response = await _httpClient.GetAsync($"{_baseUrl}/get/{key}");
 
-            var addressStr = await response.Content.ReadAsStringAsync();
+            var stringContent = await response.Content.ReadAsStringAsync();
 
-            if (int.TryParse(addressStr, out int address))
-            {
-                return _memoryIO.ReadMemory<T>(address);
-            }
+            var content = JsonConvert.DeserializeObject<CacheObject>(stringContent);
+            
+            var result = _memoryIO.ReadMemory(content.Address, content.Length);
 
-            return default;
+            return (T)ByteArrayToObject(result);
         }
 
         public async Task<bool> AddItemAsync<T>(string key, T item)
-            where T : struct
         {
             try
             {
-                var address = await AllocateMemoryForItem(item);
+                var bytes = ObjectToByteArray(item);
+                var address = await AllocateMemory(bytes.Length);
 
-                _memoryIO.WriteMemory<T>(address, item);
+                _memoryIO.WriteMemory(address, bytes);
 
                 var body = CreateJsonContent(new
                 {
                     Address = address,
                     Key = key,
-                    StructName = typeof(T).Name
+                    Length = bytes.Length
                 });
 
                 var response = await _httpClient.PostAsync($"{_baseUrl}/bind", body);
@@ -80,22 +81,11 @@ namespace QwiqClient
             }
         }
 
-        public async Task AddStruct<T>()
-            where T : struct
-        {
-            var body = CreateJsonContent(new
-            {
-                StructCode = StructToString.CreateString(typeof(T))
-            });
-
-            await _httpClient.PostAsync($"{_baseUrl}/add-struct", body);
-        }
-
-        private async Task<int> AllocateMemoryForItem(object item)
+        private async Task<int> AllocateMemory(object length)
         {
             var allocBody = CreateJsonContent(new
             {
-                Length = Marshal.SizeOf(item)
+                Length = length
             });
 
             var allocateResp = await _httpClient.PostAsync($"{_baseUrl}/allocate/", allocBody);
@@ -109,5 +99,27 @@ namespace QwiqClient
             var json = JsonConvert.SerializeObject(obj);
             return new StringContent(json);
         }
+
+        private byte[] ObjectToByteArray(object obj)
+        {
+            var bf = new BinaryFormatter();
+            using (var ms = new MemoryStream())
+            {
+                bf.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+
+        private object ByteArrayToObject(byte[] arrBytes)
+        {
+            using (var memStream = new MemoryStream())
+            {
+                var binForm = new BinaryFormatter();
+                memStream.Write(arrBytes, 0, arrBytes.Length);
+                memStream.Seek(0, SeekOrigin.Begin);
+                return binForm.Deserialize(memStream);
+            }
+        }
+
     }
 }

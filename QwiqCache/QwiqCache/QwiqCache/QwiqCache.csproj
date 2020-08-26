@@ -48,12 +48,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheHandler.cs" />
+    <Compile Include="Models\CacheObject.cs" />
     <Compile Include="Models\HttpBodies.cs" />
-    <Compile Include="Models\StructResult.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\HttpCommunicator.cs" />
-    <Compile Include="Services\StructGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

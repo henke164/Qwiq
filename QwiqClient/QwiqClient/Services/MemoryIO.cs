@@ -26,20 +26,18 @@ namespace QwiqClient.Services
             _hProc = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, false, process.Id);
         }
 
-        public void WriteMemory<T>(int address, object value)
+        public void WriteMemory(int address, byte[] buffer)
         {
-            var buffer = StructureToByteArray(value);
             WriteProcessMemory((int)_hProc, address, buffer, buffer.Length, out int read);
         }
 
-        public T ReadMemory<T>(int address) where T : struct
+        public byte[] ReadMemory(int address, int bufferSize)
         {
-            var byteSize = Marshal.SizeOf(typeof(T));
-            var buffer = new byte[byteSize];
+            var buffer = new byte[bufferSize];
             var read = 0;
             ReadProcessMemory((int)_hProc, address, buffer, buffer.Length, ref read);
 
-            return ByteArrayToStructure<T>(buffer);
+            return buffer;
         }
 
         private T ByteArrayToStructure<T>(byte[] bytes) where T : struct
@@ -53,21 +51,6 @@ namespace QwiqClient.Services
             {
                 handle.Free();
             }
-        }
-
-        private byte[] StructureToByteArray(object obj)
-        {
-            var length = Marshal.SizeOf(obj);
-
-            var array = new byte[length];
-
-            var pointer = Marshal.AllocHGlobal(length);
-
-            Marshal.StructureToPtr(obj, pointer, true);
-            Marshal.Copy(pointer, array, 0, length);
-            Marshal.FreeHGlobal(pointer);
-
-            return array;
         }
     }
 }
