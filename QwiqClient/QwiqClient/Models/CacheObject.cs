@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace QwiqClient.Models
+﻿namespace Qwiq.Models
 {
-    class CacheObject
+    public sealed class CacheObject
     {
         public int Address { get; set; }
         public int Length { get; set; }
