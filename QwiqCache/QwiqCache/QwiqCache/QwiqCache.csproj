@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheHandler.cs" />
+    <Compile Include="Models\HttpBodies.cs" />
     <Compile Include="Models\StructResult.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

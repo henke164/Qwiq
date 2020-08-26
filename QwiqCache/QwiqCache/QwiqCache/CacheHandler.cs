@@ -2,10 +2,7 @@
 using QwiqCache.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace QwiqCache
 {
@@ -17,15 +14,16 @@ namespace QwiqCache
 
         private Dictionary<string, CacheObject> _cacheDictionary = new Dictionary<string, CacheObject>();
 
-        public class CacheObject
-        {
-            public object Object { get; set; }
-            public IntPtr Address { get; set; }
-        }
-
         public CacheHandler()
         {
             _structGenerator = new StructGenerator();
+        }
+
+        public int Allocate(int length)
+        {
+            var bytes = new byte[length];
+            var handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            return (int)handle.AddrOfPinnedObject();
         }
 
         public IntPtr GetItemAddress(string key)
@@ -40,7 +38,7 @@ namespace QwiqCache
             return obj.Address;
         }
 
-        public bool AddItem(string key, string structName, string json)
+        public bool AddItem(string key, string structName, int objAddress)
         {
             if (!_structDictionary.ContainsKey(structName))
             {
@@ -49,15 +47,22 @@ namespace QwiqCache
 
             var type = _structDictionary[structName];
 
-            var obj = JsonConvert.DeserializeObject(json, type);
+            var result = Marshal.PtrToStructure(new IntPtr(objAddress), type);
 
-            var handle = GCHandle.Alloc(obj, GCHandleType.Pinned);
+            var cacheObj = new CacheObject
+            {
+                Object = result,
+                Address = new IntPtr(objAddress)
+            };
 
-            _cacheDictionary.Add(key, new CacheObject
-            { 
-                Object = obj,
-                Address = handle.AddrOfPinnedObject()
-            });
+            if (_cacheDictionary.ContainsKey(key))
+            {
+                _cacheDictionary[key] = cacheObj;
+            }
+            else
+            {
+                _cacheDictionary.Add(key, cacheObj);
+            }
 
             return true;
         }
@@ -65,8 +70,25 @@ namespace QwiqCache
         public bool AddStruct(string structStr)
         {
             var result = _structGenerator.BuildStruct(structStr);
+            if (result == null)
+            {
+                return false;
+            }
+
+            if (_structDictionary.ContainsKey(result.Name))
+            {
+                _structDictionary[result.Name] = result.Type;
+                return true;
+            }
+
             _structDictionary.Add(result.Name, result.Type);
             return true;
+        }
+
+        internal class CacheObject
+        {
+            public object Object { get; set; }
+            public IntPtr Address { get; set; }
         }
     }
 }

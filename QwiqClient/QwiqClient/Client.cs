@@ -1,7 +1,9 @@
-﻿using QwiqClient.Services;
+﻿using Newtonsoft.Json;
+using QwiqClient.Services;
 using System;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace QwiqClient
@@ -9,12 +11,17 @@ namespace QwiqClient
     public class Client : IDisposable
     {
         private string _baseUrl = "http://localhost";
-        private MemoryReader _memoryReader;
+        private MemoryIO _memoryIO;
         private HttpClient _httpClient;
 
         public Client()
         {
             _httpClient = new HttpClient();
+        }
+
+        public void Dispose()
+        {
+            _httpClient.Dispose();
         }
 
         public async Task Initialize()
@@ -25,7 +32,7 @@ namespace QwiqClient
             if (int.TryParse(pidStr, out int processId))
             {
                 var process = Process.GetProcessById(processId);
-                _memoryReader = new MemoryReader(process);
+                _memoryIO = new MemoryIO(process);
                 return;
             }
 
@@ -41,15 +48,66 @@ namespace QwiqClient
 
             if (int.TryParse(addressStr, out int address))
             {
-                return _memoryReader.ReadMemory<T>(address);
+                return _memoryIO.ReadMemory<T>(address);
             }
 
             return default;
         }
 
-        public void Dispose()
+        public async Task<bool> AddItemAsync<T>(string key, T item)
+            where T : struct
         {
-            _httpClient.Dispose();
+            try
+            {
+                var address = await AllocateMemoryForItem(item);
+
+                _memoryIO.WriteMemory<T>(address, item);
+
+                var body = CreateJsonContent(new
+                {
+                    Address = address,
+                    Key = key,
+                    StructName = typeof(T).Name
+                });
+
+                var response = await _httpClient.PostAsync($"{_baseUrl}/bind", body);
+
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task AddStruct<T>()
+            where T : struct
+        {
+            var body = CreateJsonContent(new
+            {
+                StructCode = StructToString.CreateString(typeof(T))
+            });
+
+            await _httpClient.PostAsync($"{_baseUrl}/add-struct", body);
+        }
+
+        private async Task<int> AllocateMemoryForItem(object item)
+        {
+            var allocBody = CreateJsonContent(new
+            {
+                Length = Marshal.SizeOf(item)
+            });
+
+            var allocateResp = await _httpClient.PostAsync($"{_baseUrl}/allocate/", allocBody);
+            var addressStr = await allocateResp.Content.ReadAsStringAsync();
+            var address = int.Parse(addressStr);
+            return address;
+        }
+
+        private StringContent CreateJsonContent(object obj)
+        {
+            var json = JsonConvert.SerializeObject(obj);
+            return new StringContent(json);
         }
     }
 }

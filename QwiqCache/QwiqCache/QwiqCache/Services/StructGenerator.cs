@@ -9,7 +9,7 @@ namespace QwiqCache.Services
     {
         public StructResult BuildStruct(string structString)
         {
-            var name = Regex.Match(structString, "public struct [a-zA-Z]+");
+            var name = Regex.Match(structString, "public struct [a-zA-Z0-9]+");
             var structName = name.Value.Replace("public struct ", "");
 
             var codeDomProvider = CodeDomProvider.CreateProvider("CSharp");

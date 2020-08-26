@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace QwiqClient.Services
 {
-    public class MemoryReader
+    public class MemoryIO
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
@@ -21,7 +21,7 @@ namespace QwiqClient.Services
         const int PROCESS_VM_READ = 0x0010;
         const int PROCESS_VM_WRITE = 0x0020;
 
-        public MemoryReader(Process process)
+        public MemoryIO(Process process)
         {
             _hProc = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, false, process.Id);
         }

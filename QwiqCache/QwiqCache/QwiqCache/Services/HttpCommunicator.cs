@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using QwiqCache.Models;
+using System;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,16 +16,20 @@ namespace QwiqCache.Services
 
         public Action<HttpListenerContext, string> OnGetItemRequest { get; set; }
 
-        public Action<HttpListenerContext, string, string, string> OnAddItemRequest { get; set; }
+        public Action<HttpListenerContext, AllocateMemoryBody> OnAllocateRequest { get; set; }
 
-        public Action<HttpListenerContext, string> OnAddStructRequest { get; set; }
+        public Action<HttpListenerContext, BindItemBody> OnBindItemRequest { get; set; }
+
+        public Action<HttpListenerContext, AddStructBody> OnAddStructRequest { get; set; }
 
         public HttpCommunicator()
         {
             _prefixes = new string[]
             {
                 "http://localhost/pid/",
-                "http://localhost/add/",
+                "http://localhost/allocate/",
+                "http://localhost/add-struct/",
+                "http://localhost/bind/",
                 "http://localhost/get/",
             };
         }
@@ -49,16 +56,17 @@ namespace QwiqCache.Services
             {
                 var context = listener.GetContext();
                 var request = context.Request;
+                var urlParts = request.RawUrl.Split('/');
 
                 if (request.HttpMethod == "GET")
                 {
-                    switch (request.RawUrl.Split('/')[1])
+                    switch (urlParts[1])
                     {
                         case "pid":
                             OnProcessIdRequested(context);
                             break;
                         case "get":
-                            var key = request.RawUrl.Split('/')[2];
+                            var key = urlParts[2];
                             OnGetItemRequest(context, key);
                             break;
 
@@ -67,11 +75,16 @@ namespace QwiqCache.Services
 
                 if (request.HttpMethod == "POST")
                 {
-                    switch (request.RawUrl)
+                    switch (urlParts[1])
                     {
-                        case "/add-struct":
+                        case "add-struct":
+                            OnAddStructRequest(context, GetBodyObject<AddStructBody>(request.InputStream));
                             break;
-                        case "/add-item":
+                        case "allocate":
+                            OnAllocateRequest(context, GetBodyObject<AllocateMemoryBody>(request.InputStream));
+                            break;
+                        case "bind":
+                            OnBindItemRequest(context, GetBodyObject<BindItemBody>(request.InputStream));
                             break;
                     }
                 }
@@ -89,6 +102,13 @@ namespace QwiqCache.Services
             {
                 output.Write(buffer, 0, buffer.Length);
             }
+        }
+
+        private T GetBodyObject<T>(Stream stream)
+        {
+            var allocateRdr = new StreamReader(stream);
+            var json = allocateRdr.ReadToEnd();
+            return JsonConvert.DeserializeObject<T>(json);
         }
     }
 }

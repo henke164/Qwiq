@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Threading.Tasks;
 
 namespace QwiqClient
@@ -8,6 +9,7 @@ namespace QwiqClient
         static void Main(string[] args)
         {
             Task.Run(TestGet);
+
             Console.ReadLine();
         }
 
@@ -16,14 +18,29 @@ namespace QwiqClient
             using (var client = new Client())
             {
                 await client.Initialize();
-                var obj = await client.GetAsync<MyStruct>("my-item");
-                Console.WriteLine(obj.x);
+
+                await client.AddStruct<MyStruct>();
+
+                var obj = new MyStruct()
+                {
+                    x = 13,
+                    y = 54,
+                    z = 5
+                };
+
+                await client.AddItemAsync("my-item2", obj);
+
+                var result = await client.GetAsync<MyStruct>("my-item2");
+
+                Console.WriteLine(JsonConvert.SerializeObject(result));
             }
         }
 
         public struct MyStruct
         {
             public int x;
+            public int y;
+            public int z;
         }
     }
 }
