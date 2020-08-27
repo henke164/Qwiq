@@ -16,7 +16,7 @@ Since the client is reading from another process, it needs to be runned with Adm
 ```c#
 var client = new Qwiq.QwiqClient(port: 1988);
 await client.Connect();
-await client.AddAsync("my-key", myObject);
+await client.AddAsync("my-key", veryBigList);
 ```
 **The magic:**
 
@@ -29,7 +29,7 @@ Qwiq returns the address of that allocated space and the Client can write that o
 ```c#
 var client = new Qwiq.QwiqClient(port: 1988);
 await client.Connect();
-var myObject = await client.GetAsync<MyObject>("my-key");
+var veryBigList = await client.GetAsync<List<MyObject>>("my-key");
 ```
 **The magic:**
 
