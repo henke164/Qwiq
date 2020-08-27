@@ -1,4 +1,4 @@
-# Qwiq
+# Qwiq <img src="https://github.com/henke164/Qwiq/blob/master/icon.png" alt="" width="50" />
 
 Qwiq is an open source quick in-memory data store, used as a cache broker.
 
@@ -18,7 +18,7 @@ var client = new Qwiq.QwiqClient(port: 1988);
 await client.Connect();
 await client.AddAsync("my-key", veryBigList);
 ```
-**The magic:**
+**Under the hood:**
 
 The client will break down myObject into bytes and tell Qwiq to allocate that number of bytes and connect the allocated memory address to the specific KEY.
 
@@ -31,7 +31,10 @@ var client = new Qwiq.QwiqClient(port: 1988);
 await client.Connect();
 var veryBigList = await client.GetAsync<List<MyObject>>("my-key");
 ```
-**The magic:**
+**Under the hood:**
 
 Client asks Qwiq what the pointeraddress is for "my-key". Client will get the pointer address and the size in bytes for that object. When the bytes are read from Qwiq memory,
 the client will build (MyObject)myObject from the bytes.
+
+### Speed test result with 100 000 objects
+<img src="https://github.com/henke164/Qwiq/blob/master/ExampleApp/timing.png" alt="" width="800" />
