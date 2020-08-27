@@ -55,10 +55,10 @@ namespace ExampleApp
                 persons.Add(person);
             }
 
-            // Add item to cache
+            // Add list to cache
             await client.AddAsync("person-list", persons);
 
-            // Get item from cache
+            // Get list from cache
             var result = await client.GetAsync<List<Person>>("person-list");
 
             // Convert it to json for readability
