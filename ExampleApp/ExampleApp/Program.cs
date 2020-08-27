@@ -47,11 +47,19 @@ namespace ExampleApp
                 return;
             }
 
+            var persons = new List<Person>();
+
+            // Create a list with 100000 persons
+            for (var x = 0; x < 100000; x++)
+            {
+                persons.Add(person);
+            }
+
             // Add item to cache
-            await client.AddAsync("person-1", person);
+            await client.AddAsync("person-list", persons);
 
             // Get item from cache
-            var result = await client.GetAsync<Person>("person-1");
+            var result = await client.GetAsync<List<Person>>("person-list");
 
             // Convert it to json for readability
             Console.WriteLine(JsonConvert.SerializeObject(result));
