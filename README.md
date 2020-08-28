@@ -5,7 +5,7 @@ Qwiq is an open source quick in-memory data store, used as a cache broker.
 Qwiq solves the problem where you are in need of larger number of data from the cache broker where normal requests such as HTTP aren't as optimized as you wish.
 
 With Qwiq, you dont send and receive stored data between the Client application and Qwiq cache. Instead pointer adresses are sent from Qwiq cache, so the Client can read the data
-directly from the allocated memory in the CPU.
+directly from the allocated memory.
 
 HTTP is used to send and receive pointers between the Client and Qwiq.
 
